@@ -1,0 +1,461 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook-crediario",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2432,
+        224
+      ],
+      "id": "d69b5dc0-0ca3-42d7-aa64-75d946d37543",
+      "name": "Webhook",
+      "webhookId": "24ddceff-7574-4268-92d8-51fb2dc06aa1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "save_nome_cliente",
+              "name": "nome_cliente",
+              "value": "={{ $json.nome_cliente }}",
+              "type": "string"
+            },
+            {
+              "id": "save_nome_secretaria",
+              "name": "nome_secretaria",
+              "value": "={{ $json.nome_secretaria }}",
+              "type": "string"
+            },
+            {
+              "id": "save_mensagem_original",
+              "name": "mensagem_original",
+              "value": "={{ $json.mensagem_original }}",
+              "type": "string"
+            },
+            {
+              "id": "save_chatId",
+              "name": "chatId_original",
+              "value": "={{ $json.chatId }}",
+              "type": "string"
+            },
+            {
+              "id": "save_session",
+              "name": "session_original",
+              "value": "={{ $json.session }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1232,
+        32
+      ],
+      "id": "ccfa5989-2df2-4877-9401-f44004fd8833",
+      "name": "Save Data Before AI"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "67ef5c47-9c32-46a9-a623-dfa5ce9d3150",
+              "name": "session",
+              "value": "={{ $json.body.session }}",
+              "type": "string"
+            },
+            {
+              "id": "d9572f69-0da9-4ad7-a1a1-7003eb70dfe2",
+              "name": "event",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "e9f0f432-2213-4e70-8395-61f7fe120ecd",
+              "name": "chatId",
+              "value": "={{ $json.body.payload.from }}",
+              "type": "string"
+            },
+            {
+              "id": "3e6c1229-7900-44d8-849a-0b88b6846f38",
+              "name": "pushName",
+              "value": "={{ $json.body.payload._data.Info.PushName }}",
+              "type": "string"
+            },
+            {
+              "id": "ced29107-b53b-4e1f-8255-6e558479f935",
+              "name": "payload_id",
+              "value": "={{ $json.body.payload.id }}",
+              "type": "string"
+            },
+            {
+              "id": "0bcab11c-c320-47dd-8bc0-e345bfb6c6cf",
+              "name": "fromMe",
+              "value": "={{ $json.body.payload.fromMe }}",
+              "type": "string"
+            },
+            {
+              "id": "de1cae2d-9247-4d36-bbae-e61dd914fec1",
+              "name": "message",
+              "value": "={{ $json.body.payload.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2016,
+        256
+      ],
+      "id": "e3133bc5-4d1d-40c7-880a-7b0614ba4102",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import re\n\nSECRETARIAS = [\n    \"55169999\",\n    \"551699\", \n    \"551699\",\n    \"55169\",\n    \"551698\",\n    \"551698\",\n    \"55163\",\n    \"551699\",\n    \"55169\",\n    \"553498\"\n]\n\nMAPEAMENTO_NOMES = {\n    \"551699\": \"Cobrança Cap\",\n    \"551699\": \"Leticia Morro ag\", \n    \"551699\": \"Michele COOPER E LEVE SJB\",\n    \"551698\": \"Beatriz loja7 Orlandia\",\n    \"55169\": \"Katia Caixa Sjb\",\n    \"551698\": \"TESTE\",\n    \"551638\": \"CooperTintas Guara\",\n    \"5516\": \"Chiquinho Tintas\",\n    \"55169\": \"CooperTintas Igarapava\",\n    \"5534985\": \"CooperTintas Uberaba\"\n}\n\ntry:\n    resultados = []\n    \n    for item in items:\n        json_data = item.get('json', {})\n        \n        # Extrai dados\n        chatId = json_data.get('chatId', '')\n        mensagem = json_data.get('message', '')\n        pushName = json_data.get('pushName', 'Secretária')\n        session = json_data.get('session', 'default')\n        fromMe = json_data.get('fromMe', 'false')\n        \n        print(f\"\\n{'='*60}\", flush=True)\n        print(f\"🔍 PRIMEIRO CÓDIGO - ANALISANDO MENSAGEM\", flush=True)\n        print(f\"{'='*60}\", flush=True)\n        print(f\"ChatId: {chatId}\", flush=True)\n        print(f\"Mensagem: {mensagem}\", flush=True)\n        print(f\"PushName: {pushName}\", flush=True)\n        \n        # ========================================\n        # FILTROS DE SEGURANÇA\n        # ========================================\n        if str(fromMe).lower() == 'true':\n            print(f\"⏭️  BLOQUEADO: Mensagem própria\", flush=True)\n            continue\n            \n        if '@g.us' in chatId.lower():\n            print(f\"⏭️  BLOQUEADO: É um GRUPO\", flush=True)\n            continue\n            \n        if 'status@broadcast' in chatId.lower():\n            print(f\"⏭️  BLOQUEADO: É STATUS\", flush=True)\n            continue\n            \n        if not chatId or '@c.us' not in chatId.lower():\n            print(f\"⏭️  BLOQUEADO: ChatId inválido\", flush=True)\n            continue\n        \n        # ========================================\n        # LIMPA NÚMERO E VERIFICA AUTORIZAÇÃO\n        # ========================================\n        numero = re.sub(r'\\D', '', chatId)\n        print(f\"📱 Número limpo: {numero}\", flush=True)\n        \n        autorizado = numero in SECRETARIAS\n        \n        if autorizado:\n            # Usa nome do mapeamento\n            nome_secretaria = MAPEAMENTO_NOMES.get(numero, pushName)\n            \n            print(f\"✅ AUTORIZADO!\", flush=True)\n            print(f\"   Secretária: {nome_secretaria}\", flush=True)\n            print(f\"   Mensagem: {mensagem}\", flush=True)\n            \n            # EXTRAI NOME DO CLIENTE DA MENSAGEM\n            nome_cliente = \"Não identificado\"\n            if mensagem and ',' in mensagem:\n                nome_cliente = mensagem.split(',')[0].strip().title()\n                print(f\"   Cliente extraído: {nome_cliente}\", flush=True)\n            \n            resultados.append({\n                'json': {\n                    # DADOS ORIGINAIS\n                    'chatId': chatId,\n                    'session': session,\n                    'autorizado': True,\n                    \n                    # DADOS PARA O SEGUNDO CÓDIGO\n                    'mensagem_original': mensagem,\n                    'nome_secretaria': nome_secretaria,\n                    'nome_cliente': nome_cliente,\n                    'numero_secretaria': numero,\n                    \n                    # CAMPOS EXTRA PARA COMPATIBILIDADE\n                    'message': mensagem,\n                    'pushName': nome_secretaria\n                }\n            })\n        else:\n            print(f\"🚫 NÃO AUTORIZADO!\", flush=True)\n    \n    print(f\"\\n📊 PRIMEIRO CÓDIGO: {len(resultados)} mensagem(ns) autorizada(s)\", flush=True)\n    return resultados\n\nexcept Exception as e:\n    print(f\"\\n❌ ERRO NO PRIMEIRO CÓDIGO: {str(e)}\", flush=True)\n    import traceback\n    print(traceback.format_exc(), flush=True)\n    return []"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1792,
+        400
+      ],
+      "id": "7588436e-84f6-4cd2-8256-786716a794db",
+      "name": "Code in Python (Beta)2",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5285bf69-91b6-4d01-be82-1fcd7cc86f16",
+              "leftValue": "={{ $json.autorizado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1520,
+        192
+      ],
+      "id": "da87057d-c8ce-4229-9ec4-206bfefb1e6a",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Code in Python (Beta)2').item.json.nome_secretaria }}\n{{ $('Code in Python (Beta)2').item.json.nome_cliente }}\n{{ $('Code in Python (Beta)2').item.json.mensagem_original }}",
+        "options": {
+          "systemMessage": "*VOCÊ É UM ANALISTA DE RISCO AUTOMÁTICO PARA AVALIAÇÃO DE CREDIÁRIO.*\n\n*DADOS DA SOLICITAÇÃO:*\n- Secretária: {{$json.nome_secretaria}}\n- Cliente: {{$json.nome_cliente}}\n- Dados: {{$json.mensagem_original}}\n\n*REGRAS DE CRÉDITO:*\n- **APROVADO:** Se (Score > 500) E (\"nada consta\") E (Limite ≤ 2999)\n- **REPROVADO:** Caso contrário\n\n*FORMATO DE RESPOSTA:*\n\n**SE APROVADO:**\n```pode por aprovado```\n\n**SE REPROVADO:**\n```CLIENTE: [Nome do Cliente]\nSECRETARIA: [Nome da Secretária]\nMENSAGEM: [dados completos]\nMOTIVO: [explicação da reprovação]```\n\n*EXEMPLOS:*\n\nPara \"Maria, 2500, nada consta, 600\" (APROVADO):\n```pode por aprovado```\n\nPara \"João, 3500, nada consta, 650\" (REPROVADO):\n```CLIENTE: João\nSECRETARIA: Leticia Morro ag\nMENSAGEM: João, 3500, nada consta, 650\nMOTIVO: Limite solicitado de R$ 3.500,00 excede o máximo permitido de R$ 2.999,00```\n\n*IMPORTANTE:* \n- Para APROVADO: apenas \"pode por aprovado\"\n- Para REPROVADO: use o formato exato acima"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        256
+      ],
+      "id": "b76264b0-6959-45a0-9bea-1f8ce6aafcd0",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        576
+      ],
+      "id": "466b8c79-d938-45e8-932e-81dd56de6c2a",
+      "name": "Google Gemini Chat Model1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields2').item.json.chatId }}",
+        "sessionTTL": 3600,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -880,
+        608
+      ],
+      "id": "f21ed946-e079-4287-a466-9f11e78da909",
+      "name": "Redis Chat Memory1"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "try:\n    resultados = []\n    \n    for item in items:\n        json_data = item.get('json', {})\n        \n        print(f\"\\n{'='*60}\", flush=True)\n        print(f\"🤖 DECISÃO: SECRETÁRIA vs GRUPO vs BLOQUEAR\", flush=True)\n        print(f\"{'='*60}\", flush=True)\n        \n        resposta_ia = json_data.get('output', '')\n        print(f\"Resposta IA:\\n{resposta_ia}\", flush=True)\n        \n        # 🔍 LÓGICA CLARA DE DECISÃO\n        def tomar_decisao(texto):\n            texto_lower = texto.lower().strip()\n            \n            # 1. 🎯 \"PODE POR APROVADO\" → SECRETÁRIA (MESMO SEM ESTRUTURA)\n            if \"pode por aprovado\" in texto_lower:\n                print(f\"   ✅ APROVAÇÃO - VAI PARA SECRETÁRIA\", flush=True)\n                return 'secretaria'\n            \n            # 2. VERIFICAR SE TEM ESTRUTURA BÁSICA (só se não for aprovação)\n            if 'cliente:' not in texto_lower or 'mensagem:' not in texto_lower:\n                print(f\"   🚫 SEM ESTRUTURA - BLOQUEAR\", flush=True)\n                return 'bloquear'\n            \n            # 3. EXTRAIR DADOS PARA VALIDAÇÃO\n            cliente = \"Não identificado\"\n            mensagem_original = \"\"\n            motivo = \"\"\n            \n            linhas = texto.split('\\n')\n            for linha in linhas:\n                linha = linha.strip()\n                if linha.startswith('CLIENTE:'):\n                    cliente = linha.replace('CLIENTE:', '').strip()\n                elif linha.startswith('MENSAGEM:'):\n                    mensagem_original = linha.replace('MENSAGEM:', '').strip()\n                elif linha.startswith('MOTIVO:'):\n                    motivo = linha.replace('MOTIVO:', '').strip().lower()\n            \n            # 4. \"DADOS INSUFICIENTES\" → BLOQUEAR\n            if any(phrase in motivo for phrase in [\n                'dados insuficientes', \n                'informações insuficientes',\n                'não foi possível identificar',\n                'não consegui identificar',\n                'falta de dados',\n                'dados incompletos'\n            ]):\n                print(f\"   🚫 DADOS INSUFICIENTES - BLOQUEAR\", flush=True)\n                return 'bloquear'\n            \n            # 5. CASOS DE TESTE → BLOQUEAR\n            if (cliente.lower() in ['não identificado', 'teste', 'exemplo'] or\n                mensagem_original.lower() in ['teste', 'ok', 'exemplo']):\n                print(f\"   🚫 CASO DE TESTE - BLOQUEAR\", flush=True)\n                return 'bloquear'\n            \n            # 6. SE CHEGOU ATÉ AQUI → GRUPO\n            print(f\"   📋 SOLICITAÇÃO VÁLIDA - VAI PARA GRUPO\", flush=True)\n            return 'grupo'\n        \n        # APLICAR DECISÃO\n        decisao = tomar_decisao(resposta_ia)\n        \n        if decisao == 'bloquear':\n            print(f\"💬 BLOQUEADO - IGNORADO\", flush=True)\n            continue\n        \n        # SE CHEGOU AQUI → PROCESSAR\n        print(f\"📋 PROCESSANDO - Destino: {decisao.upper()}\", flush=True)\n        \n        # EXTRAIR DADOS (se existirem)\n        cliente = \"Não identificado\"\n        secretaria = \"Secretária\"\n        mensagem_original = \"\"\n        motivo = \"\"\n        mensagem_grupo = None\n        mensagem_secretaria = None\n        \n        # Tentar extrair dados se existirem na estrutura\n        if 'cliente:' in resposta_ia.lower():\n            linhas = resposta_ia.strip().split('\\n')\n            for linha in linhas:\n                linha = linha.strip()\n                if linha.startswith('CLIENTE:'):\n                    cliente = linha.replace('CLIENTE:', '').strip()\n                elif linha.startswith('SECRETARIA:'):\n                    secretaria = linha.replace('SECRETARIA:', '').strip()\n                elif linha.startswith('MENSAGEM:'):\n                    mensagem_original = linha.replace('MENSAGEM:', '').strip()\n                elif linha.startswith('MOTIVO:'):\n                    motivo = linha.replace('MOTIVO:', '').strip()\n        \n        print(f\"   👤 Cliente: {cliente}\", flush=True)\n        print(f\"   📋 Secretária: {secretaria}\", flush=True)\n        \n        if decisao == 'secretaria':\n            tipo_decisao = 'aprovado'\n            mensagem_secretaria = f\"\"\"✅ PEDIDO APROVADO AUTOMATICAMENTE\n\n👤 Cliente: {cliente}\n📋 Solicitado por: {secretaria}\n\n💬 Solicitação:\n{mensagem_original if mensagem_original else 'Aprovado automaticamente pela IA'}\n\n📊 Status: APROVADO\n_O pedido foi aprovado automaticamente pelo sistema._\n\n🎯 Próximos passos: Encaminhar para o setor responsável.\"\"\"\n            \n        else:  # decisao == 'grupo'\n            tipo_decisao = 'reprovado'\n            mensagem_grupo = f\"\"\"🔴 ANÁLISE MANUAL NECESSÁRIA\n\n👤 Cliente: {cliente}\n📋 Solicitado por: {secretaria}\n\n📊 Dados Recebidos:\n{mensagem_original}\n\n🤖 Análise Automática:\n{motivo}\n\n_Aguardando decisão manual..._\"\"\"\n        \n        resultados.append({\n            'json': {\n                **json_data,\n                'tipo_decisao': tipo_decisao,\n                'aprovado': tipo_decisao == 'aprovado',\n                'reprovado': tipo_decisao == 'reprovado',\n                'mensagem_para_grupo': mensagem_grupo,\n                'mensagem_para_secretaria': mensagem_secretaria,\n                'resposta_original': resposta_ia,\n                'cliente_extraido': cliente,\n                'secretaria_extraida': secretaria,\n                'mensagem_original': mensagem_original,\n                'motivo': motivo\n            }\n        })\n        print(f\"📤 ENVIADO: {tipo_decisao.upper()} → {decisao.upper()}\", flush=True)\n    \n    return resultados if resultados else []\n\nexcept Exception as e:\n    print(f\"\\n❌ ERRO: {str(e)}\", flush=True)\n    import traceback\n    print(traceback.format_exc(), flush=True)\n    return []"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        448
+      ],
+      "id": "5a18a845-6f3c-4e88-8132-c7abdde9aae7",
+      "name": "Code in Python (Beta)3",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "03bda99e-08d2-4b19-a9d0-35d592193d00",
+              "leftValue": "={{ $json.aprovado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        224
+      ],
+      "id": "ca0afe25-84bc-402d-9754-56ad59fd34d1",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Seen",
+        "session": "={{ $('Edit Fields2').item.json.session }}",
+        "chatId": "={{ $('Edit Fields2').item.json.chatId }}",
+        "messageId": "={{ $('Edit Fields2').item.json.payload_id }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        0,
+        0
+      ],
+      "id": "56744072-46f4-4cec-808c-a675a5d21832",
+      "name": "Send Seen1"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields2').item.json.session }}",
+        "chatId": "={{ $('Edit Fields2').item.json.chatId }}",
+        "text": "={{ $('AI Agent1').item.json.output }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        208,
+        0
+      ],
+      "id": "2fad5357-48bb-4727-ade8-a5d69a1ee0cd",
+      "name": "Send a text message1"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields2').item.json.session }}",
+        "chatId": "120363405417299627@g.us",
+        "text": "={{ $json.mensagem_para_grupo }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        0,
+        432
+      ],
+      "id": "1d21ba51-a659-4601-acce-896a0b2a748b",
+      "name": "Send to Credit Group1"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Data Before AI": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Save Data Before AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Send Seen1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send to Credit Group1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "9c07dfa92b376eeb861035fee37f5c77c391e74074594fc834bc3b2321f8f7f5"
+  }
+}
