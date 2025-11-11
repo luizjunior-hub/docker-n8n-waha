@@ -92,7 +92,8 @@ Após o download das imagens, verifique se os containers estão ativos no **Dock
 1. No painel do N8N, clique em:
    **Workflows → Import from file**
 2. Cole o conteúdo do fluxo JSON do FlowZap.
-3. Clique em **Save** para salvar o workflow.
+3. https://github.com/luizjunior-hub/docker-n8n-waha/blob/main/flowzap.json
+4. Clique em **Save** para salvar o workflow.
 
 ---
 
