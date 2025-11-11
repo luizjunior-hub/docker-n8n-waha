@@ -1,48 +1,138 @@
-# docker-n8n-waha
-docker-n8n-waha
 
-1️⃣ Instalar o Docker no seu computador:
+# 🚀 Guia FlowZap – Instalação e Configuração (n8n + WAHA)
 
-Baixe o aplicativo Docker Desktop de acordo com o seu sistema operacional (Windows, MacOS ou Linux): https://docker.com
+**Versão:** 1.0
+**Plataformas:** Windows & Linux
+**Projeto:** FlowZap – Automação de WhatsApp Inteligente
 
-Obs: No Linux existe um passo extra. Após baixar o Docker Desktop, você precisará abrir um terminal (CMD) e executar o comando:
+---
 
+## 📘 Introdução
+
+Este guia ensina passo a passo como instalar e configurar o ambiente **FlowZap**, que integra o **n8n** e o **WAHA (WhatsApp API Gateway)** para automatizar fluxos de mensagens inteligentes.
+O conteúdo é compatível com **Windows** e **Linux**.
+
+---
+
+## 🧩 Etapa 1 – Instalação do Docker
+
+### **Windows**
+
+1. Baixe o **Docker Desktop** em:
+   👉 [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+2. Instale e abra o aplicativo.
+3. Certifique-se de que o Docker está em execução.
+
+### **Linux (Ubuntu/Debian)**
+
+```bash
+sudo apt update
 sudo apt install docker-compose
+sudo systemctl start docker
+sudo systemctl enable docker
+```
 
-2️⃣ Baixe o arquivo docker-compose.yml do Github:
+---
 
-Faça download do arquivo docker-compose.yml no Github:https://github.com/luizjunior-hub/docker-n8n-waha
-3️⃣ Crie uma pasta com o arquivo dentro, e execute o comando no terminal:
+## 📁 Etapa 2 – Baixar e preparar os arquivos
 
-Nos seus downloads, crie uma nova pasta com nome "N8N WAHA Local" ou parecido, e coloque o arquivo docker-compose.yml dentro dela.
+1. Crie uma pasta, por exemplo:
+   `C:\FlowZap`
+2. Baixe o arquivo **docker-compose.yml** do repositório oficial:
+   👉 [https://github.com/luizjunior-hub/docker-n8n-waha](https://github.com/luizjunior-hub/docker-n8n-waha)
+3. Coloque o arquivo dentro da pasta criada.
 
-Depois abra essa pasta com o arquivo dentro, abra um terminal nela clicando com o botão direito e "abrir no terminal" e execute o comando:
+---
+
+## ⚙️ Etapa 3 – Subir os containers
+
+Abra o terminal na pasta do projeto:
+
+```bash
+cd C:\FlowZap
+# ou no Linux
+cd ~/FlowZap
 
 docker-compose up -d
+```
 
-Aguarde o docker baixar e subir os containers dos aplicativos.
+Após o download das imagens, verifique se os containers estão ativos no **Docker Desktop**:
+✅ n8n
+✅ waha
+✅ postgres
+✅ redis
 
-4️⃣ Conectar seu Whatsapp no WAHA:
+---
 
-Após baixar tudo, abra o aplicativo Docker Desktop e você verá uma nova stack de containers com os aplicativos N8N e WAHA, e os bancos de dados Redis e Postgres. Para acessá-los basta clicar na porta do container através da tabela de exibição (formato xxxx:xxxx).
-Acesse o WAHA através do navegador clicando na porta 3000:3000 pelo aplicativo Docker Desktop, depois clique em "Dashboard" logo em cima.
-No dashboard, inicie a sessão default já existente e leia o QR Code que aparece clicando em "Login".
+## 📱 Etapa 4 – Conectar o WhatsApp no WAHA
 
-5️⃣ Configurar o N8N:
+1. Acesse [http://localhost:3000](http://localhost:3000) no navegador.
+2. No painel WAHA, vá em:
+   **Dashboard → Session “default” → Login**
+3. Escaneie o **QR Code** com o WhatsApp do celular.
 
-Após entrar no WAHA com seu Whatsapp, volte ao aplicativo do Docker Desktop e acesse o N8N, clicando na porta 5678:5678 e faça as configurações da sua conta.
+---
 
-Após criar a conta, informe um e-mail para receber uma chave de ativação gratuita do N8N. Isso irá te ajudar liberando algumas funções extras.
+## 🧠 Etapa 5 – Configurar o N8N
 
-Copie a chave que chega em seu e-mail, e no painel do N8N, vá nos três pontinhos do canto inferior esquerdo, clique em settings, e depois "Enter Activation Key" na tela que aparece, e informe a chave que recebeu.
+1. Acesse [http://localhost:5678](http://localhost:5678).
+2. Crie sua conta e ative a licença gratuita.
+3. Vá em:
+   **Settings → Community Nodes → Install a community node**
+4. Instale o pacote:
 
-Após ativar o N8N, vá para o painel "Community Nodes" (do lado esquerdo da tela, ainda em settings), clique em "Install a community node" e digite:
+   ```
+   n8n-nodes-waha
+   ```
 
-n8n-nodes-waha
+---
 
-Clique em "Install" e aguarde.
+## 🔄 Etapa 6 – Importar o fluxo JSON
 
-Pronto! A configuração do N8N está feita e agora podemos montar o Workflow.
+1. No painel do N8N, clique em:
+   **Workflows → Import from file**
+2. Cole o conteúdo do fluxo JSON do FlowZap.
+3. Clique em **Save** para salvar o workflow.
 
-6️⃣ Montar o Workflow:
+---
+
+## 🚀 Etapa 7 – Testar o fluxo
+
+1. Copie o **Webhook URL** do primeiro nó (Webhook) no N8N.
+2. No WAHA, adicione a URL em:
+   **Settings → Webhooks → message: received**
+3. Envie uma mensagem de teste no WhatsApp, como:
+
+   ```
+   Maria, 2500, nada consta, 600
+   ```
+4. O FlowZap irá processar e responder automaticamente com base nas regras do fluxo.
+
+---
+
+## 🔍 Etapa 8 – Logs e manutenção
+
+Para acompanhar os logs dos containers em tempo real:
+
+```bash
+docker-compose logs -f
+```
+
+Ou individualmente:
+
+```bash
+docker logs -f n8n
+docker logs -f waha
+```
+
+Esses comandos permitem acompanhar as mensagens e garantir que o sistema está operando corretamente.
+
+---
+
+## ✅ Conclusão
+
+Pronto! 🎉
+Seu ambiente **FlowZap** está instalado, o **WhatsApp** conectado e o **fluxo de mensagens inteligente** configurado.
+
+Agora é só começar a criar automações e aprimorar seus fluxos dentro do N8N.
 
